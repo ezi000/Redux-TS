@@ -1,18 +1,22 @@
-import { createSlice } from "@reduxjs/toolkit";
-const initialState = [
-  {
-    id: 0,
-    author: "John Doe",
-    title: "First Post!",
-    content: "Hello!",
-  },
-];
+import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { InternalPost } from "./useGetPosts";
+
+const initialState = {
+  posts: [] as InternalPost[],
+};
 
 export const postsSlice = createSlice({
   name: "posts",
   initialState,
-  reducers: {},
+  reducers: {
+    setPosts: (state, action: PayloadAction<InternalPost[]>) => {
+      state.posts = action.payload;
+    },
+    savePost: (state, action: PayloadAction<InternalPost>) => {
+      state.posts.unshift(action.payload);
+    },
+  },
 });
 
-export const {} = postsSlice.actions;
+export const { setPosts, savePost } = postsSlice.actions;
 export default postsSlice.reducer;

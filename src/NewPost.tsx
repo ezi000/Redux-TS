@@ -1,16 +1,49 @@
-import { useState } from "react";
 import styled from "styled-components";
 import { useGetUsers } from "./features/posts/useGetUsers";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "./app/store";
+import { PostsList } from "./components/PostsList";
+import { useGetPosts } from "./features/posts/useGetPosts";
+import { savePost } from "./features/posts/postsSlice";
+import { useFormik } from "formik";
 
 export const NewPost = () => {
-  const [title, setTitle] = useState<string>("");
-  const [content, setContent] = useState<string>("");
-  const [user, setUser] = useState<string>("");
+  const formik = useFormik({
+    initialValues: {
+      title: "",
+      user: "",
+      content: "",
+    },
+    onSubmit: (values) => {
+      dispatch(
+        savePost({
+          id: Math.random().toString(),
+          title: values.title,
+          body: values.content,
+          userId: Number(values.user),
+        })
+      );
+      formik.resetForm();
+    },
+    validate: (values) => {
+      const errors: Record<string, string> = {};
+      if (!values.title) {
+        errors.title = "Required";
+      }
+      if (!values.user) {
+        errors.user = "Required";
+      }
+      if (!values.content) {
+        errors.content = "Required";
+      }
+      return errors;
+    },
+  });
 
   const users = useSelector((state: RootState) => state.users.users);
   useGetUsers(10);
+  useGetPosts(2);
+  const dispatch = useDispatch();
 
   if (users.length == 0) {
     return <h1>Loading...</h1>;
@@ -19,43 +52,50 @@ export const NewPost = () => {
   return (
     <>
       <h1>Add a New Post</h1>
-      <Form>
+      <Form onSubmit={formik.handleSubmit}>
         <label htmlFor="title">Post Title:</label>
         <input
           type="text"
           id="title"
-          value={title}
+          value={formik.values.title}
           name="title"
-          onChange={(e) => {
-            setTitle(e.target.value);
-          }}
+          onChange={formik.handleChange}
         />
-        <label htmlFor="title">Author:</label>
+
+        {formik.errors.title && formik.touched.title && (
+          <div>{formik.errors.title}</div>
+        )}
+        <label htmlFor="user">Author:</label>
         <select
           id="user"
-          value={user}
+          value={formik.values.user}
           name="user"
-          onChange={(e) => {
-            setUser(e.target.value);
-          }}
+          onChange={formik.handleChange}
         >
           {users.map((user) => (
-            <option key={user.id} value={user.name}>
+            <option key={user.id} value={user.id}>
               {user.name}
             </option>
           ))}
         </select>
+        {formik.errors.user && formik.touched.user && (
+          <div>{formik.errors.user}</div>
+        )}
         <label htmlFor="content">Content:</label>
         <TextArea
           id="content"
-          value={content}
+          value={formik.values.content}
           name="content"
-          onChange={(e) => {
-            setContent(e.target.value);
-          }}
+          onChange={formik.handleChange}
         />
-        <button type="submit">Submit</button>
+        {formik.errors.content && formik.touched.content && (
+          <div>{formik.errors.content}</div>
+        )}
+        <button type="submit" disabled={!formik.isValid}>
+          Submit
+        </button>
       </Form>
+      <PostsList />
     </>
   );
 };
@@ -64,7 +104,9 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   font-size: 1.5rem;
-  width: 50%;
+  width: 50vw;
+  height: 60vh;
+  margin-top: 2rem;
 `;
 
 const TextArea = styled.textarea`
